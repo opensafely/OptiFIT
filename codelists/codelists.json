@@ -1,3 +1,10 @@
 {
-  "files": {}
+  "files": {
+    "user-joewest-fit-and-fob-snomed.csv": {
+      "id": "user/joewest/fit-and-fob-snomed/742fb217",
+      "url": "https://www.opencodelists.org/codelist/user/joewest/fit-and-fob-snomed/742fb217/",
+      "downloaded_at": "2026-10-07 09:33:01.125806+00:00Z",
+      "sha": "3d8486106682094f7acfdfc838411797e1615da1"
+    }
+  }
 }

@@ -1,0 +1,26 @@
+code,term
+1015401000000102,Faecal occult blood test
+1049361000000101,Quantitative faecal immunochemical test
+1049361000000100,Quantitative faecal immunochemical test
+1049371000000108,Quantitative faecal immunochemical test 
+144890002,Faecal occult blood &/or test
+144891003,Faecal occult blood requested
+144892005,Faecal occult blood: negative
+144893000,Faecal occult blood: trace
+144894006,Faecal occult blood: positive
+144895007,Faecal occult blood NOS
+149421000000109,Provision of faecal immunochemical test kit
+149441000000102,Provision of faecal immunochemical test kit declined
+167665003,Fecal occult blood test
+167666002,Fecal occult blood requested
+167667006,Occult blood not detected in feces
+167668001,Fecal occult blood: trace
+167669009,Fecal occult blood: positive
+167670005,Fecal occult blood NOS
+270024004,Faecal occult blood &/or test
+320531000000106,Serial faecal occult blood normal
+320581000000105,Serial faecal occult blood abnormal
+389076003,Trace occult blood detected in feces
+555901000000100,Fecal occult blood NOS
+59614000,Occult blood detected in feces
+71711000112103,Occult blood detected in feces by immunoassay
