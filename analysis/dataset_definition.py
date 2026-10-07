@@ -21,6 +21,7 @@ enter_date = "2019-01-01"
 
 # Note: the end date is set to 2026-01-01 to allow follow up of 1 year until end 2026 from 1st January 2025 (the end of the fit inclusion
 #  period)
+# this sets the population to only include patients who have a practice registration that spans the enter_date and 2026-01-01
 has_registration = practice_registrations.spanning(enter_date, "2026-01-01").exists_for_patient()
 
 # Define the future clinical events for each patient where the event date is on or after the enter_date and before 2025-01-01
@@ -60,12 +61,13 @@ aged_18_or_older = (first_fit_date - patients.date_of_birth).years >= 18
 
 # Create the dataset and define the population
 dataset = create_dataset()
-dataset.define_population(has_registration & aged_18_or_older)
+dataset.define_population(has_registration & aged_18_or_older & fit_events.exists_for_patient())
 
 dataset.sex = patients.sex
 dataset.age_at_first_fit = (first_fit_date - patients.date_of_birth).years
 dataset.first_fit_date = first_fit_date
 dataset.value_of_first_max_fit_observed = earliest_max_fit_event.numeric_value
+
 
 ## some code that doesn't work yet (due to multiple FIT values being available on the same date and me not being able to figure out
 #  how to get just one!)
