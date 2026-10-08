@@ -7,10 +7,16 @@ from ehrql.tables.tpp import (
 )
 
 # Define codelists
-# note should probably restrict to just this FIT code 1049361000000101 as seems to be the used SNOMED code for FIT test in TPP,
-# but leaving in the other codes for now as they are in the codelist
+# note should probably restrict to just this FIT code 1049361000000101 (see nhs refsets code list)
+# as seems to be the used SNOMED code for FIT test in TPP
+
 fit_codes = codelist_from_csv(
     "codelists/user-joewest-fit-and-fob-snomed.csv",
+    column="code",
+)
+
+single_fit_code = codelist_from_csv(
+    "codelists/nhsd-primary-care-domain-refsets-faecimm_cod.csv",
     column="code",
 )
 
@@ -29,14 +35,14 @@ has_registration = practice_registrations.spanning(enter_date, "2026-01-01").exi
 # Note: to allow follow up of 1 year until end 2026. This is probably not a needed step.
 future_events = clinical_events.where(clinical_events.date.is_on_or_between(enter_date, "2026-01-01"))
 
-# Define the FIT test events for each patient where there is a numeric value recorded (i.e. the test was completed)
+# Define the FIT test events for each patient where there is a numeric value recorded (i.e. the test was completed) up to end 2024
 fit_events = clinical_events.where(
-        clinical_events.snomedct_code.is_in(fit_codes)
+        clinical_events.snomedct_code.is_in(single_fit_code)
 ).where(
         # Note: filter out NULL numeric values before sorting
         clinical_events.numeric_value.is_not_null()
 ).where(
-        clinical_events.date.is_on_or_after(enter_date)
+        clinical_events.date.is_on_or_between(enter_date, "2025-01-01")
 )
 
 # Define the first FIT test date for each patient
@@ -88,4 +94,4 @@ dataset.valid_fit_events_positive = valid_fit_events_positive.exists_for_patient
 #  how to get just one!)
 # dataset.first_fit_value = fit_events.where(clinical_events.date == first_fit_date).numeric_value 
 
-
+dataset.configure_dummy_data(population_size=10000)

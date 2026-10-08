@@ -6,3 +6,10 @@ actions:
     outputs:
       highly_sensitive:
         dataset: output/dataset.csv.gz
+
+  first analysis:
+    run: r:v2 analysis/first_analysis.R
+    needs: [generate-dataset]
+    outputs:
+      highly_sensitive:
+        cohort: output/first_analysis.feather
