@@ -19,14 +19,14 @@ fit_codes = codelist_from_csv(
 # and be aged 18 or older at the time of their first FIT test
 enter_date = "2019-01-01"
 
-# Note: the end date is set to 2026-01-01 to allow follow up of 1 year until end 2026 from 1st January 2025 (the end of the fit inclusion
+# Note: the end date is set to 2026-01-01 to allow follow up of 1 year until end 2026 (JN: end 2025?) from 1st January 2025 (the end of the fit inclusion
 #  period)
 has_registration = practice_registrations.spanning(enter_date, "2026-01-01").exists_for_patient()
 
 # Define the future clinical events for each patient where the event date is on or after the enter_date and before 2025-01-01
 # Note: the end date is set to 2025-01-01 to avoid including fit tests that occur after the study period (which ends on 2024-12-31)
-# Note: to allow follow up of 1 year until end 2026
-future_events = clinical_events.where(clinical_events.date.is_on_or_between(enter_date, "2025-01-01"))
+# Note: to allow follow up of 1 year until end 2026 (JN: end 2025?)
+future_events = clinical_events.where(clinical_events.date.is_on_or_between(enter_date, "2025-01-01")) #JN: this will include 1/1/25?
 
 # Define the FIT test events for each patient where there is a numeric value recorded (i.e. the test was completed)
 fit_events = clinical_events.where(
