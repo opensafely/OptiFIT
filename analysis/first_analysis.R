@@ -1,5 +1,6 @@
 # load libraries
 library(data.table)
+library("ggplot2")
 
 fit <- data.table::fread(here::here("output", "dataset.csv"))
 setkey(fit, patient_id)
@@ -20,7 +21,13 @@ fit[, gender := fifelse(
 fit[, .N, keyby=gender]
 
 #manage fit value
+fit[, .N, keyby=index_fit_value]
+fit[index_fit_value == 0, .N]
+fit[index_fit_value == 10, .N]
+fit[index_fit_value > 400, .N]
+
 fit[, fit10 := ifelse(index_fit_value > 10, TRUE, FALSE)]
+fit[, .N, keyby=fit10]
 
 fit[, fit_cat := fcase(
   index_fit_value <= 4, "<4",
@@ -36,3 +43,58 @@ fit[, fit_cat := factor(
   levels = c("<4", "4-9.9", "10-19.9", "20-39.9", "40-99.9", ">=100"),
   ordered = TRUE
 )]
+
+#look at fit values
+plot.n <- fit[, .N, keyby=index_fit_value]
+## For value FIT <=10
+fitn <- ggplot(plot.n[index_fit_value <= 10], aes(x = index_fit_value, y = N)) +
+  geom_line() +
+  geom_point() +
+  geom_text(
+    data = plot[index_fit_value <= 10 & index_fit_value %% 1 == 0],  # only integers
+    aes(label = N),
+    vjust = -0.5
+  ) +
+  scale_x_continuous(
+    breaks = -1:10,
+    limits = c(-1, 10)
+  ) +
+  labs(
+    x = "FIT value (µgHb/g)",
+    y = "Number of FIT"
+  ) +
+  theme_bw()
+print(fitn)
+
+plot.p <- fit[index_fit_value >= 10, .(
+  N = .N
+), by = .(
+  fit_bin = pmin(floor(index_fit_value / 10) * 10, 400)
+)][order(fit_bin)]
+
+fitp <- ggplot(plot.p, aes(x = fit_bin, y = N)) +
+  geom_col() +
+  scale_x_continuous(
+    breaks = seq(10, 400, by = 10),
+    limits = c(10, 400),
+    expand = c(0, 0)
+  ) +
+  labs(
+    x = "FIT value (µgHb/g)",
+    y = "Number of FIT"
+  ) +
+  theme_bw()
+print(fitp)
+
+#comparator
+fit[, .N, keyby=fit_comparator] 
+fit[fit_comparator == "<", .N, keyby=index_fit_value]
+fit[fit_comparator == "<=", .N, keyby=index_fit_value]
+fit[fit_comparator == "=", .N, keyby=index_fit_value]
+fit[fit_comparator == ">", .N, keyby=index_fit_value]
+fit[fit_comparator == ">=", .N, keyby=index_fit_value]
+fit[fit_comparator == "~", .N, keyby=index_fit_value]
+
+
+
+
