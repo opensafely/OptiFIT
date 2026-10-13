@@ -49,33 +49,27 @@ fit_codes = codelist_from_csv(
     "codelists/user-joewest-fit-and-fob-snomed.csv",
     column="code",
 )
-single_fit_code = codelist_from_csv(
-    "codelists/nhsd-primary-care-domain-refsets-faecimm_cod.csv",
-    column="code",
-)
-
-all_fit_codes = fit_codes & single_fit_code
 
 # Define the study population
 # Note: patients must have a practice registration that spans the enter_date and 2026-01-01,
 # and be aged 18 or older at the time of their first FIT test
-enter_date = "2019-01-01"
+study_start_date = "2019-01-01"
 study_end_date = "2024-12-31"
 
-
-fit_event = 
-clinical_events_ranges is in FIT codelist_
-is not null
-is >=0
-within enter and study_end
-# Do we accept the max FIT and cap it?
-# Need to check what's the max
+fit_event = (
+    clinical_events_ranges
+    .where(clinical_events_ranges.snomedct_code.is_in(fit_codes))
+    .where(clinical_events_ranges.numeric_value.is_not_null())
+    .where(clinical_events_ranges.numeric_value >= 0)
+    .where(clinical_events_ranges.date.is_on_or_after(study_start_date))
+    .where(clinical_events_ranges.date.is_on_or_before(study_end_date))
+)
 
 # Define index FIT
 # Select the earliest FIT date;
 # if multiple records occur on that date, select the highest value
 index_fit = (
-    fit_events
+    fit_event
     .sort_by(clinical_events_ranges.date, -clinical_events_ranges.numeric_value)
     .first_for_patient()
 )
@@ -85,54 +79,32 @@ index_fit_value = index_fit.numeric_value
 fit_comparator = index_fit.comparator
 
 # Define eligibility criteria
-
-## Is alive at index FIT
+## is alive at index FIT
 is_alive = patients.is_alive_on(index_fit_date)
 
-## Require registration to cover the index FIT date and the following year
-lookback_start_date = index_fit_date - years(1)
-followup_end_date = index_fit_date + years(1)
-
-(registererd on) has_full_registration = (
-    practice_registrations
-    .spanning(lookback_start_date, index_fit_date)
+## is registered at FIT
+has_registration = (
+    practice_registrations.for_patient_on(index_fit_date)
     .exists_for_patient()
 )
-
-# Death occurs during follow-up
-# as a variable died_during_followup = (
-    (ons_deaths.date.is_after(index_fit_date) & ons_deaths.date.is_on_or_before(followup_end_date))
-    | (patients.date_of_death.is_after(index_fit_date) & patients.date_of_death.is_on_or_before(index_fit_date))
-)
-
-# Combined
-has_registration = (has_full_registration | died_during_followup)
-
-# issue: one registration may not cover the duration of start-end period - just like CPRD, accept?
-# issue: do we need FU from 1 year before or just index FIT
-# Taking maximum first FIT as there are multiple FIT values on the same date for some patients, 
-# and so have taken the maximum value as the first FIT value for those patients (could take minimum or mean but imagine there may be zeros)
 
 ## Age 18 or older at index FIT
 ## Define the age of patients at the time of their first FIT test
 age_at_index_fit = patients.age_on(index_fit_date)
-aged_18_or_older = (
+age_eligible = (
     age_at_index_fit.is_not_null()
-    & age_at_index_fit >= 18
-    & age_at_index_fit <110)
+    & (age_at_index_fit >= 18)
+    & (age_at_index_fit < 110)
+)
 
 ## Has valid index FIT
 has_index_fit = index_fit_date.is_not_null()
-
-## Has HES/ONS linkage (need validation)
-(take off) has_hes_record = apcs.exists_for_patient()
-has_ons_death_record = ons_deaths.exists_for_patient() #only Feb 2019 onwards
 
 ## Combine eligibility criteria
 eligible_cohort = (
     has_index_fit
     & is_alive
-    & aged_18_or_older<100
+    & age_eligible
     & has_registration
 )
 
@@ -140,21 +112,8 @@ eligible_cohort = (
 index_address = addresses.for_patient_on(index_fit_date)
 index_gp = practice_registrations.for_patient_on(index_fit_date)
 
-# Define the valid FIT test events for each patient where there is a numeric value recorded (i.e. the test was completed) and the result is positive (i.e. the numeric value is greater than or equal to 10)
-fit_values = fit_events.numeric_value
-
-valid_fit_events_positive = fit_events.where(earliest_max_fit_event.numeric_value >= 10)
-
-# Define the age of patients at the time of their first FIT test
-
-aged_18_or_older = (first_fit_date - patients.date_of_birth).years >= 18
-
-# Define the calendar year of first fit test
-
-year_of_first_fit = first_fit_date.year
 
 # Create the dataset and define the population
-
 dataset = create_dataset()
 dataset.define_population(eligible_cohort)
 dataset.configure_dummy_data(population_size=10000)
@@ -175,21 +134,6 @@ dataset.rural_urban_classification = (
 )
 dataset.region = index_gp.practice_nuts1_region_name
 dataset.ethnicity = ethnicity_from_sus.code
-dataset.define_population(has_registration & aged_18_or_older & fit_events.exists_for_patient())
-
-# add columns to the dataset
-
-dataset.sex = patients.sex
-dataset.age_at_first_fit = (first_fit_date - patients.date_of_birth).years
-dataset.year_of_first_fit = year_of_first_fit
-dataset.first_fit_date = first_fit_date
-dataset.value_of_first_max_fit_observed = earliest_max_fit_event.numeric_value
-dataset.first_fit_code = earliest_max_fit_event.snomedct_code
-dataset.valid_fit_events_positive = valid_fit_events_positive.exists_for_patient()
 
 
-## some code that doesn't work yet (due to multiple FIT values being available on the same date and me not being able to figure out
-#  how to get just one!)
-# dataset.first_fit_value = fit_events.where(clinical_events.date == first_fit_date).numeric_value 
-
-dataset.configure_dummy_data(population_size=10000)
+# opensafely exec ehrql:v1 generate-dataset analysis/dataset_definition.py --output output/dataset.csv
