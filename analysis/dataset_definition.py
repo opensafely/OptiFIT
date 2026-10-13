@@ -54,35 +54,20 @@ single_fit_code = codelist_from_csv(
     column="code",
 )
 
-single_fit_code = codelist_from_csv(
-    "codelists/nhsd-primary-care-domain-refsets-faecimm_cod.csv",
-    column="code",
-)
+all_fit_codes = fit_codes & single_fit_code
 
 # Define the study population
 # Note: patients must have a practice registration that spans the enter_date and 2026-01-01,
 # and be aged 18 or older at the time of their first FIT test
 enter_date = "2019-01-01"
+study_end_date = "2024-12-31"
 
-# Note: the end date is set to 2026-01-01 to allow follow up of 1 year until end 2026 from 1st January 2025 (the end of the fit inclusion
-#  period) this may need to change if HES data only available until sometime in 2025
-# this sets the population to only include patients who have a practice registration that spans the enter_date and 2026-01-01
-# Note: this will need testing if it is the right registration condition to use, but it seems to be the right one to use for now
-has_registration = practice_registrations.spanning(enter_date, "2026-01-01").exists_for_patient()
 
-# Define the future clinical events for each patient where the event date is on or after the enter_date and before 2026-01-01
-# Note: to allow follow up of 1 year until end 2026. This is probably not a needed step.
-future_events = clinical_events.where(clinical_events.date.is_on_or_between(enter_date, "2026-01-01"))
-
-# Define the FIT test events for each patient where there is a numeric value recorded (i.e. the test was completed) up to end 2024
-fit_events = clinical_events.where(
-        clinical_events.snomedct_code.is_in(single_fit_code)
-).where(
-        # Note: filter out NULL numeric values before sorting
-        clinical_events.numeric_value.is_not_null()
-).where(
-        clinical_events.date.is_on_or_between(enter_date, "2025-01-01")
-)
+fit_event = 
+clinical_events_ranges is in FIT codelist_
+is not null
+is >=0
+within enter and study_end
 # Do we accept the max FIT and cap it?
 # Need to check what's the max
 
@@ -108,14 +93,14 @@ is_alive = patients.is_alive_on(index_fit_date)
 lookback_start_date = index_fit_date - years(1)
 followup_end_date = index_fit_date + years(1)
 
-has_full_registration = (
+(registererd on) has_full_registration = (
     practice_registrations
-    .spanning(lookback_start_date, followup_end_date)
+    .spanning(lookback_start_date, index_fit_date)
     .exists_for_patient()
 )
 
 # Death occurs during follow-up
-died_during_followup = (
+# as a variable died_during_followup = (
     (ons_deaths.date.is_after(index_fit_date) & ons_deaths.date.is_on_or_before(followup_end_date))
     | (patients.date_of_death.is_after(index_fit_date) & patients.date_of_death.is_on_or_before(index_fit_date))
 )
@@ -140,16 +125,15 @@ aged_18_or_older = (
 has_index_fit = index_fit_date.is_not_null()
 
 ## Has HES/ONS linkage (need validation)
-has_hes_record = apcs.exists_for_patient()
+(take off) has_hes_record = apcs.exists_for_patient()
 has_ons_death_record = ons_deaths.exists_for_patient() #only Feb 2019 onwards
 
 ## Combine eligibility criteria
 eligible_cohort = (
     has_index_fit
     & is_alive
-    & aged_18_or_older
+    & aged_18_or_older<100
     & has_registration
-    & (has_hes_record | has_ons_death_record)
 )
 
 # variables
