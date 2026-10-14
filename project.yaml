@@ -11,5 +11,6 @@ actions:
     run: r:v2 analysis/first_analysis.R
     needs: [generate_dataset]
     outputs:
-      highly_sensitive:
-        cohort: output/first_analysis.feather
+      moderately_sensitive:
+        fitn: output/fitn.png
+        fitp: output/fitp.png

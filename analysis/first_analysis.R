@@ -50,6 +50,13 @@ fitn <- ggplot(plot.n, aes(x = index_fit_value, y = N)) +
     y = "Number of FIT"
   ) +
   theme_bw()
+  ggsave(
+  filename = "output/fitn.png",
+  plot = fitn,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
 print(fitn)
 
 plot.p <- fit[index_fit_value >= 10, .(
@@ -70,6 +77,13 @@ fitp <- ggplot(plot.p, aes(x = fit_bin, y = N)) +
     y = "Number of FIT"
   ) +
   theme_bw()
+ggsave(
+  filename = "output/fitp.png",
+  plot = fitp,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
 print(fitp)
 
 #comparator
