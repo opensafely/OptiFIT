@@ -2,7 +2,7 @@
 library(data.table)
 library("ggplot2")
 
-fit <- data.table::fread(here::here("output", "dataset.csv"))
+fit <- data.table::fread(here::here("output", "dataset.csv.gz"))
 setkey(fit, patient_id)
 
 #manage fit value

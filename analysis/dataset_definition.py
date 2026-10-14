@@ -136,4 +136,4 @@ dataset.region = index_gp.practice_nuts1_region_name
 dataset.ethnicity = ethnicity_from_sus.code
 
 
-# opensafely exec ehrql:v1 generate-dataset analysis/dataset_definition.py --output output/dataset.csv
+# opensafely exec ehrql:v1 generate-dataset analysis/dataset_definition.py --output output/dataset.csv.gz
