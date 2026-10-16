@@ -14,3 +14,4 @@ actions:
       moderately_sensitive:
         fitn: output/fitn.png
         fitp: output/fitp.png
+        tbl_all: output/tbl1c.html
