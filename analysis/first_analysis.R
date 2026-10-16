@@ -2,17 +2,59 @@
 library(data.table)
 library("ggplot2")
 
+# Help functions (could be in another file)
+median.iqr <- function(x, digits = 0) {
+  paste0(round(median(x, na.rm = T), digits = digits),
+         " (",
+         paste(round(quantile(
+           x, c(0.25, 0.75), na.rm = T
+         ), digits = digits), collapse = ","),
+         ")")
+}
+
+mean.ci <- function(x, dig = 0) {
+  paste0(round(mean(x, na.rm = T), digits = dig),
+         " (",
+         paste(
+           round(mean(x, na.rm = T) - 1.96 * sd(x, na.rm = T), digits = dig),
+           round(mean(x, na.rm = T) + 1.96 * sd(x, na.rm = T), digits = dig),
+           collapse = ","
+         )
+         ,
+         ")")
+}
+
+n.perc <- function(x, dig = 0) {
+  paste0((sum(x == T, na.rm = T)),
+         " (", round(mean(x, na.rm = T), digits = dig) * 100, "%)")
+}
+
 fit <- data.table::fread(here::here("output", "dataset.csv.gz"))
 setkey(fit, patient_id)
 
-#manage fit value
-fit[, .N, keyby=index_fit_value]
+
+fit[, .(
+  n = .N,
+  n_missing = sum(is.na(index_fit_value)),
+  mean = mean(index_fit_value, na.rm = TRUE),
+  sd = sd(index_fit_value, na.rm = TRUE),
+  median = median(index_fit_value, na.rm = TRUE),
+  q1 = quantile(index_fit_value, 0.25, na.rm = TRUE),
+  q3 = quantile(index_fit_value, 0.75, na.rm = TRUE),
+  iqr = IQR(index_fit_value, na.rm = TRUE),
+  min = min(index_fit_value, na.rm = TRUE),
+  max = max(index_fit_value, na.rm = TRUE)
+)]
 fit[index_fit_value == 0, .N]
 fit[index_fit_value == 10, .N]
 fit[index_fit_value > 400, .N]
 
+#manage fit value
 fit[, fit10 := ifelse(index_fit_value > 10, TRUE, FALSE)]
-fit[, .N, keyby=fit10]
+fit[, .(
+  n = .N,
+  percentage = round(.N / nrow(fit) * 100, 1)
+), keyby = fit10]
 
 fit[, fit_cat := fcase(
   index_fit_value <= 4, "<4",
@@ -28,7 +70,11 @@ fit[, fit_cat := factor(
   levels = c("<4", "4-9.9", "10-19.9", "20-39.9", "40-99.9", ">=100"),
   ordered = TRUE
 )]
-fit[, .N, keyby=fit_cat]
+fit[, .(
+  n = .N,
+  percentage = round(.N / nrow(fit) * 100, 1)
+), keyby = fit_cat]
+
 
 #look at fit values
 plot.n <- fit[index_fit_value <=10, .N, keyby=index_fit_value]
@@ -87,13 +133,30 @@ ggsave(
 print(fitp)
 
 #comparator
-fit[, .N, keyby=fit_comparator] 
-fit[fit_comparator == "<", .N, keyby=index_fit_value]
-fit[fit_comparator == "<=", .N, keyby=index_fit_value]
-fit[fit_comparator == "=", .N, keyby=index_fit_value]
-fit[fit_comparator == ">", .N, keyby=index_fit_value]
-fit[fit_comparator == ">=", .N, keyby=index_fit_value]
-fit[fit_comparator == "~", .N, keyby=index_fit_value]
+fit[, .(
+  n = .N,
+  percentage = round(.N / nrow(fit) * 100, 1)
+), keyby = fit_comparator]
+fit[index_fit_value == 10 & fit_comparator == "<", .N, keyby=index_fit_value]
+fit[index_fit_value == 10 & fit_comparator == "<=", .N, keyby=index_fit_value]
+fit[index_fit_value == 10 & fit_comparator == "=", .N, keyby=index_fit_value]
+fit[index_fit_value == 10 & fit_comparator == ">", .N, keyby=index_fit_value]
+fit[index_fit_value == 10 & fit_comparator == ">=", .N, keyby=index_fit_value]
+fit[index_fit_value == 10 & fit_comparator == "~", .N, keyby=index_fit_value]
+
+fit[index_fit_value <10 & fit_comparator == "<", .N, keyby=index_fit_value]
+fit[index_fit_value <10 & fit_comparator == "<=", .N, keyby=index_fit_value]
+fit[index_fit_value <10 & fit_comparator == "=", .N, keyby=index_fit_value]
+fit[index_fit_value <10 & fit_comparator == ">", .N, keyby=index_fit_value]
+fit[index_fit_value <10 & fit_comparator == ">=", .N, keyby=index_fit_value]
+fit[index_fit_value <10 & fit_comparator == "~", .N, keyby=index_fit_value]
+
+fit[index_fit_value >10 & fit_comparator == "<", .N, keyby=index_fit_value]
+fit[index_fit_value >10 & fit_comparator == "<=", .N, keyby=index_fit_value]
+fit[index_fit_value >10 & fit_comparator == "=", .N, keyby=index_fit_value]
+fit[index_fit_value >10 & fit_comparator == ">", .N, keyby=index_fit_value]
+fit[index_fit_value >10 & fit_comparator == ">=", .N, keyby=index_fit_value]
+fit[index_fit_value >10 & fit_comparator == "~", .N, keyby=index_fit_value]
 
 
 #manage age and gender
@@ -103,20 +166,86 @@ fit[, age_cat := cut(
   labels = c("<40", "40-49", "50-59", "60-69", ">=70"),
   right = FALSE
 )]
-fit[, .N, keyby=age_cat]
+fit[, .(
+  n = .N,
+  percentage = round(.N / nrow(fit) * 100, 1)
+), keyby = age_cat]
 
 fit[, gender := fifelse(
   sex == "female", "F",
   fifelse(sex == "male", "M", "I")
 )]
-fit[, .N, keyby=gender]
+fit[, .(
+  n = .N,
+  percentage = round(.N / nrow(fit) * 100, 1)
+), keyby = gender]
 
 #look at numbers
-fit[, .N, keyby=index_fit_year]
-fit[, .N, keyby=.(fit10, index_fit_year)]
-fit[, .N, keyby=gender]
-fit[, .N, keyby=.(fit10, gender)]
-fit[, .N, keyby=age_cat]
-fit[, .N, keyby=.(fit10, age_cat)]
-fit[, .N, keyby=region]
-fit[, .N, keyby=.(fit10, region)]
+##year
+fit[, {
+  n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+  n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
+  
+  .(
+    overall = .N,
+    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    
+    fitn = n_false,
+    fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
+    
+    fitp = n_true,
+    fitp_rowpct = round(n_true / (n_false + n_true) * 100, 1)
+  )
+}, keyby = index_fit_year]
+
+##gender
+fit[, {
+  n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+  n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
+  
+  .(
+    overall = .N,
+    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    
+    fitn = n_false,
+    fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
+    
+    fitp = n_true,
+    fitp_rowpct = round(n_true / (n_false + n_true) * 100, 1)
+  )
+}, keyby = gender]
+
+##age_cat
+fit[, {
+  n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+  n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
+  
+  .(
+    overall = .N,
+    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    
+    fitn = n_false,
+    fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
+    
+    fitp = n_true,
+    fitp_rowpct = round(n_true / (n_false + n_true) * 100, 1)
+  )
+}, keyby = age_cat]
+
+##region
+fit[, {
+  n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+  n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
+  
+  .(
+    overall = .N,
+    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    
+    fitn = n_false,
+    fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
+    
+    fitp = n_true,
+    fitp_rowpct = round(n_true / (n_false + n_true) * 100, 1)
+  )
+}, keyby = region]
+
