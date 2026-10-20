@@ -67,8 +67,8 @@ fit[, .(
 
 fit[, fit_cat := fcase(
   adj_value <= 4, "<4",
-  adj_value > 4 & adj_value <= 10, "4-9.9",
-  adj_value > 10 & adj_value < 20, "10-19.9",
+  adj_value > 4 & adj_value < 10, "4-9.9",
+  adj_value >= 10 & adj_value < 20, "10-19.9",
   adj_value >= 20 & adj_value < 40, "20-39.9",
   adj_value >= 40 & adj_value < 100, "40-99.9",
   adj_value >= 100, ">=100"
@@ -141,18 +141,6 @@ ggsave(
   dpi = 300
 )
 print(fitp)
-
-#comparator
-fit[, .(
-  n = .N,
-  percentage = round(.N / nrow(fit) * 100, 1)
-), keyby = fit_comparator]
-fit[index_fit_value == 10 & fit_comparator == "<", .N]
-fit[index_fit_value == 10 & fit_comparator == "<=", .N]
-fit[index_fit_value == 10 & fit_comparator == "=", .N]
-fit[index_fit_value == 10 & fit_comparator == ">", .N]
-fit[index_fit_value == 10 & fit_comparator == ">=", .N]
-fit[index_fit_value == 10 & fit_comparator == "~", .N]
 
 
 #manage age, gender and ethnicity
@@ -392,3 +380,79 @@ print(
   include.rownames = FALSE,
   file = "output/tbl1c.html"
 )
+
+
+#look at comparators
+#comparator
+fit[, .(
+  n = .N,
+  percentage = round(.N / nrow(fit) * 100, 1)
+), keyby = fit_comparator]
+fit[index_fit_value == 10 & fit_comparator == "<", .N]
+fit[index_fit_value == 10 & fit_comparator == "<=", .N]
+fit[index_fit_value == 10 & fit_comparator == "=", .N]
+fit[index_fit_value == 10 & fit_comparator == ">", .N]
+fit[index_fit_value == 10 & fit_comparator == ">=", .N]
+fit[index_fit_value == 10 & fit_comparator == "~", .N]
+
+fit[, .N, keyby=fit_comparator]
+lessthan <- fit[fit_comparator == "<"]
+lessthanequal <- fit[fit_comparator == "<="]
+morethan <- fit[fit_comparator == ">"]
+morethanequal <- fit[fit_comparator == ">="]
+equal <- fit[fit_comparator == "=" | fit_comparator == "~" ]
+
+####################################################################################
+fitn <- ggplot(plot.n, aes(x = index_fit_value, y = N)) +
+  geom_line() +
+  geom_point() +
+  geom_text(
+    data = plot.n[index_fit_value <= 10 & index_fit_value %% 1 == 0],  # only integers
+    aes(label = N),
+    vjust = -0.5
+  ) +
+  scale_x_continuous(
+    breaks = -1:10,
+    limits = c(-1, 10)
+  ) +
+  labs(
+    x = "FIT value (µgHb/g)",
+    y = "Number of FIT"
+  ) +
+  theme_bw()
+ggsave(
+  filename = "output/fitn.png",
+  plot = fitn,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+print(fitn)
+
+plot.p <- fit[index_fit_value >= 10, .(
+  N = .N
+), by = .(
+  fit_bin = pmin(floor(index_fit_value / 10) * 10, 400)
+)][order(fit_bin)]
+
+fitp <- ggplot(plot.p, aes(x = fit_bin, y = N)) +
+  geom_col() +
+  scale_x_continuous(
+    breaks = seq(10, 400, by = 10),
+    limits = c(10, 400),
+    expand = c(0, 0)
+  ) +
+  labs(
+    x = "FIT value (µgHb/g)",
+    y = "Number of FIT"
+  ) +
+  theme_bw()
+ggsave(
+  filename = "output/fitp.png",
+  plot = fitp,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+print(fitp)
+
