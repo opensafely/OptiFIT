@@ -15,3 +15,10 @@ actions:
         fitn: output/fitn.png
         fitp: output/fitp.png
         tbl_all: output/tbl1c.html
+
+  comparator_analysis:
+    run: r:v2 analysis/comparator_analysis.R
+    needs: [generate_dataset]
+    outputs:
+      moderately_sensitive:
+        tbl_comp: output/tbl_comp.html

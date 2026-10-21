@@ -307,7 +307,17 @@ tbl1 <- transpose(fit_gender[, .(
   "3 (%)" = n.perc(imd_quintile == "3", 2),
   "4 (%)" = n.perc(imd_quintile == "4", 2),
   "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2)
+  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
+  "No region (%)" = n.perc(region == "", 2),
+  "East (%)" = n.perc(region == "East", 2),
+  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
+  "London (%)" = n.perc(region == "London", 2),
+  "North East (%)" = n.perc(region == "North East", 2),
+  "North West (%)" = n.perc(region == "North West", 2),
+  "South East (%)" = n.perc(region == "South East", 2),
+  "South West (%)" = n.perc(region == "South West", 2),
+  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
+  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
 tbl1n <- transpose(fit_gender[fit10 == FALSE, .(
@@ -336,7 +346,17 @@ tbl1n <- transpose(fit_gender[fit10 == FALSE, .(
   "3 (%)" = n.perc(imd_quintile == "3", 2),
   "4 (%)" = n.perc(imd_quintile == "4", 2),
   "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2)
+  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
+  "No region (%)" = n.perc(region == "", 2),
+  "East (%)" = n.perc(region == "East", 2),
+  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
+  "London (%)" = n.perc(region == "London", 2),
+  "North East (%)" = n.perc(region == "North East", 2),
+  "North West (%)" = n.perc(region == "North West", 2),
+  "South East (%)" = n.perc(region == "South East", 2),
+  "South West (%)" = n.perc(region == "South West", 2),
+  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
+  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
 tbl1p <- transpose(fit_gender[fit10 == TRUE, .(
@@ -365,7 +385,17 @@ tbl1p <- transpose(fit_gender[fit10 == TRUE, .(
   "3 (%)" = n.perc(imd_quintile == "3", 2),
   "4 (%)" = n.perc(imd_quintile == "4", 2),
   "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2)
+  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
+  "No region (%)" = n.perc(region == "", 2),
+  "East (%)" = n.perc(region == "East", 2),
+  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
+  "London (%)" = n.perc(region == "London", 2),
+  "North East (%)" = n.perc(region == "North East", 2),
+  "North West (%)" = n.perc(region == "North West", 2),
+  "South East (%)" = n.perc(region == "South East", 2),
+  "South West (%)" = n.perc(region == "South West", 2),
+  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
+  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
 setnames(tbl1, "V1", "All patients")
@@ -380,79 +410,3 @@ print(
   include.rownames = FALSE,
   file = "output/tbl1c.html"
 )
-
-
-#look at comparators
-#comparator
-fit[, .(
-  n = .N,
-  percentage = round(.N / nrow(fit) * 100, 1)
-), keyby = fit_comparator]
-fit[index_fit_value == 10 & fit_comparator == "<", .N]
-fit[index_fit_value == 10 & fit_comparator == "<=", .N]
-fit[index_fit_value == 10 & fit_comparator == "=", .N]
-fit[index_fit_value == 10 & fit_comparator == ">", .N]
-fit[index_fit_value == 10 & fit_comparator == ">=", .N]
-fit[index_fit_value == 10 & fit_comparator == "~", .N]
-
-fit[, .N, keyby=fit_comparator]
-lessthan <- fit[fit_comparator == "<"]
-lessthanequal <- fit[fit_comparator == "<="]
-morethan <- fit[fit_comparator == ">"]
-morethanequal <- fit[fit_comparator == ">="]
-equal <- fit[fit_comparator == "=" | fit_comparator == "~" ]
-
-####################################################################################
-fitn <- ggplot(plot.n, aes(x = index_fit_value, y = N)) +
-  geom_line() +
-  geom_point() +
-  geom_text(
-    data = plot.n[index_fit_value <= 10 & index_fit_value %% 1 == 0],  # only integers
-    aes(label = N),
-    vjust = -0.5
-  ) +
-  scale_x_continuous(
-    breaks = -1:10,
-    limits = c(-1, 10)
-  ) +
-  labs(
-    x = "FIT value (µgHb/g)",
-    y = "Number of FIT"
-  ) +
-  theme_bw()
-ggsave(
-  filename = "output/fitn.png",
-  plot = fitn,
-  width = 8,
-  height = 6,
-  dpi = 300
-)
-print(fitn)
-
-plot.p <- fit[index_fit_value >= 10, .(
-  N = .N
-), by = .(
-  fit_bin = pmin(floor(index_fit_value / 10) * 10, 400)
-)][order(fit_bin)]
-
-fitp <- ggplot(plot.p, aes(x = fit_bin, y = N)) +
-  geom_col() +
-  scale_x_continuous(
-    breaks = seq(10, 400, by = 10),
-    limits = c(10, 400),
-    expand = c(0, 0)
-  ) +
-  labs(
-    x = "FIT value (µgHb/g)",
-    y = "Number of FIT"
-  ) +
-  theme_bw()
-ggsave(
-  filename = "output/fitp.png",
-  plot = fitp,
-  width = 10,
-  height = 6,
-  dpi = 300
-)
-print(fitp)
-
