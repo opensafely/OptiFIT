@@ -116,7 +116,7 @@ index_gp = practice_registrations.for_patient_on(index_fit_date)
 # Create the dataset and define the population
 dataset = create_dataset()
 dataset.define_population(eligible_cohort)
-dataset.configure_dummy_data(population_size=10000)
+dataset.configure_dummy_data(population_size=20000, timeout=900)
 
 dataset.sex = patients.sex
 dataset.age_at_index_fit = age_at_index_fit

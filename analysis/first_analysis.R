@@ -47,16 +47,16 @@ fit[, .(
   max = max(index_fit_value, na.rm = TRUE)
 )]
 fit[index_fit_value == 0, .N]
+fit[index_fit_value <10, .N]
 fit[index_fit_value == 10, .N]
 fit[index_fit_value > 400, .N]
 
 #manage fit value
 ## for now, consider value at 10 as 10, but value at 10 with < or <= sign as 9.9
-fit[, adj_value := fifelse(
-  index_fit_value == 10 & fit_comparator %in% c("<", "<="),
-  9.9,
-  index_fit_value
-)]
+fit[, adj_value := index_fit_value]
+fit[index_fit_value == 10 & fit_comparator == "<", adj_value := 9.99]
+fit[index_fit_value == 10 & fit_comparator == "<=", adj_value := 9.99]
+fit[index_fit_value == 10, .N, keyby=adj_value]
 
 fit[, fit10 := adj_value >= 10]
 
