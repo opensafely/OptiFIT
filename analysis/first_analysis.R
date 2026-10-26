@@ -479,10 +479,12 @@ print(
   file = "output/tbl1c.html"
 )
 
+rm(tbl1, tbl1n, tbl1p)
+
 ############################### NO ZERO ################################################
 fit_no_zero <- fit_gender[index_fit_value > 0]
 
-tbl1_no_zero <- transpose(fit_no_zero[, .(
+tbl_no_zero <- transpose(fit_no_zero[, .(
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -521,7 +523,7 @@ tbl1_no_zero <- transpose(fit_no_zero[, .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1n_no_zero <- transpose(fit_no_zero[fit10 == FALSE, .(
+tbln_no_zero <- transpose(fit_no_zero[fit10 == FALSE, .(
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -560,7 +562,7 @@ tbl1n_no_zero <- transpose(fit_no_zero[fit10 == FALSE, .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1p_no_zero <- transpose(fit_no_zero[fit10 == TRUE, .(
+tblp_no_zero <- transpose(fit_no_zero[fit10 == TRUE, .(
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -599,16 +601,66 @@ tbl1p_no_zero <- transpose(fit_no_zero[fit10 == TRUE, .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-setnames(tbl1_no_zero, "V1", "All patients")
-setnames(tbl1n_no_zero, "V1", "FIT <10")
-setnames(tbl1p_no_zero, "V1", "FIT >=10")
+setnames(tbl_no_zero, "V1", "All patients")
+setnames(tbln_no_zero, "V1", "FIT <10")
+setnames(tblp_no_zero, "V1", "FIT >=10")
 
-tbl1c_no_zero <- merge(tbl1, tbl1n, by = "Category", all = TRUE, sort = FALSE)
-tbl1c_no_zero <- merge(tbl1c_no_zero, tbl1p, by = "Category", all = TRUE, sort = FALSE)
+tblc_no_zero <- merge(tbl_no_zero, tbln_no_zero, by = "Category", all = TRUE, sort = FALSE)
+tblc_no_zero <- merge(tblc_no_zero, tblp_no_zero, by = "Category", all = TRUE, sort = FALSE)
 print(
-  xtable(tbl1c_no_zero),
+  xtable(tblc_no_zero),
   type = "html",
   include.rownames = FALSE,
-  file = "output/tbl1c_no_zero.html"
+  file = "output/tblc_no_zero.html"
 )
 
+rm(tbl_no_zero, tbln_no_zero, tblp_no_zero)
+
+
+############################### ZEROES######################################
+fit_zero <- fit_gender[index_fit_value == 0]
+tbl_zero <- transpose(fit_zero[, .(
+  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
+  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
+  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
+  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
+  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
+  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
+  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
+  "Male (%)" = n.perc(gender == "M", 2),
+  "Female (%)" = n.perc(gender == "F", 2),
+  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
+  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
+  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
+  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
+  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
+  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
+  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
+  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
+  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
+  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
+  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
+  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
+  "2 (%)" = n.perc(imd_quintile == "2", 2),
+  "3 (%)" = n.perc(imd_quintile == "3", 2),
+  "4 (%)" = n.perc(imd_quintile == "4", 2),
+  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
+  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
+  "No region (%)" = n.perc(region == "", 2),
+  "East (%)" = n.perc(region == "East", 2),
+  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
+  "London (%)" = n.perc(region == "London", 2),
+  "North East (%)" = n.perc(region == "North East", 2),
+  "North West (%)" = n.perc(region == "North West", 2),
+  "South East (%)" = n.perc(region == "South East", 2),
+  "South West (%)" = n.perc(region == "South West", 2),
+  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
+  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
+)], keep.names = "Category")
+
+print(
+  xtable(tbl_zero),
+  type = "html",
+  include.rownames = FALSE,
+  file = "output/tbl_zero.html"
+)

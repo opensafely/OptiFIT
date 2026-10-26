@@ -127,7 +127,7 @@ fit_comp[, .(
 
 
 #Create a table 1 without indeterminate gender
-tbl1_comp <- transpose(fit_comp[, .(
+tbl_comp <- transpose(fit_comp[, .(
   "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
   "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
   "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
@@ -155,7 +155,7 @@ tbl1_comp <- transpose(fit_comp[, .(
   "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
   "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
   "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2)
+  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -174,7 +174,7 @@ tbl1_comp <- transpose(fit_comp[, .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1a_comp <- transpose(fit_comp[fit_comparator == "<", .(
+tbla_comp <- transpose(fit_comp[fit_comparator == "<", .(
   "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
   "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
   "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
@@ -202,7 +202,7 @@ tbl1a_comp <- transpose(fit_comp[fit_comparator == "<", .(
   "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
   "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
   "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2)
+  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -221,7 +221,7 @@ tbl1a_comp <- transpose(fit_comp[fit_comparator == "<", .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1b_comp <- transpose(fit_comp[fit_comparator == "<=", .(
+tblb_comp <- transpose(fit_comp[fit_comparator == "<=", .(
   "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
   "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
   "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
@@ -249,7 +249,7 @@ tbl1b_comp <- transpose(fit_comp[fit_comparator == "<=", .(
   "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
   "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
   "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2)
+  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -268,7 +268,7 @@ tbl1b_comp <- transpose(fit_comp[fit_comparator == "<=", .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1c_comp <- transpose(fit_comp[fit_comparator == ">", .(
+tblc_comp <- transpose(fit_comp[fit_comparator == ">", .(
   "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
   "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
   "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
@@ -296,7 +296,7 @@ tbl1c_comp <- transpose(fit_comp[fit_comparator == ">", .(
   "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
   "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
   "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2)
+  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -315,7 +315,7 @@ tbl1c_comp <- transpose(fit_comp[fit_comparator == ">", .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1d_comp <- transpose(fit_comp[fit_comparator == ">=", .(
+tbld_comp <- transpose(fit_comp[fit_comparator == ">=", .(
   "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
   "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
   "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
@@ -343,7 +343,7 @@ tbl1d_comp <- transpose(fit_comp[fit_comparator == ">=", .(
   "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
   "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
   "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2)
+  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -362,7 +362,7 @@ tbl1d_comp <- transpose(fit_comp[fit_comparator == ">=", .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1e_comp <- transpose(fit_comp[fit_comparator == "=", .(
+tble_comp <- transpose(fit_comp[fit_comparator == "=", .(
   "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
   "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
   "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
@@ -390,7 +390,7 @@ tbl1e_comp <- transpose(fit_comp[fit_comparator == "=", .(
   "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
   "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
   "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2)
+  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -409,7 +409,7 @@ tbl1e_comp <- transpose(fit_comp[fit_comparator == "=", .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-tbl1f_comp <- transpose(fit_comp[fit_comparator == "~", .(
+tblf_comp <- transpose(fit_comp[fit_comparator == "~", .(
   "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
   "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
   "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
@@ -437,7 +437,7 @@ tbl1f_comp <- transpose(fit_comp[fit_comparator == "~", .(
   "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
   "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
   "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2)
+  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
   "2019 (%)" = n.perc(index_fit_year == "2019", 2),
   "2020 (%)" = n.perc(index_fit_year == "2020", 2),
   "2021 (%)" = n.perc(index_fit_year == "2021", 2),
@@ -456,24 +456,26 @@ tbl1f_comp <- transpose(fit_comp[fit_comparator == "~", .(
   "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
 )], keep.names = "Category")
 
-setnames(tbl1_comp, "V1", "All patients")
-setnames(tbl1a_comp, "V1", "<")
-setnames(tbl1b_comp, "V1", "<=")
-setnames(tbl1c_comp, "V1", ">")
-setnames(tbl1d_comp, "V1", ">=")
-setnames(tbl1e_comp, "V1", "=")
-setnames(tbl1f_comp, "V1", "~")
+setnames(tbl_comp, "V1", "All patients")
+setnames(tbla_comp, "V1", "<")
+setnames(tblb_comp, "V1", "<=")
+setnames(tblc_comp, "V1", ">")
+setnames(tbld_comp, "V1", ">=")
+setnames(tble_comp, "V1", "=")
+setnames(tblf_comp, "V1", "~")
 
-tbl_comp <- merge(tbl1_comp, tbl1a_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp <- merge(tbl_comp, tbl1b_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp <- merge(tbl_comp, tbl1c_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp <- merge(tbl_comp, tbl1d_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp <- merge(tbl_comp, tbl1e_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp <- merge(tbl_comp, tbl1f_comp, by = "Category", all = TRUE, sort = FALSE)
+tbl_comp_combined <- merge(tbl_comp, tbla_comp, by = "Category", all = TRUE, sort = FALSE)
+tbl_comp_combined <- merge(tbl_comp_combined, tblb_comp, by = "Category", all = TRUE, sort = FALSE)
+tbl_comp_combined <- merge(tbl_comp_combined, tblc_comp, by = "Category", all = TRUE, sort = FALSE)
+tbl_comp_combined <- merge(tbl_comp_combined, tbld_comp, by = "Category", all = TRUE, sort = FALSE)
+tbl_comp_combined <- merge(tbl_comp_combined, tble_comp, by = "Category", all = TRUE, sort = FALSE)
+tbl_comp_combined <- merge(tbl_comp_combined, tblf_comp, by = "Category", all = TRUE, sort = FALSE)
 
 print(
-  xtable(tbl_comp),
+  xtable(tbl_comp_combined),
   type = "html",
   include.rownames = FALSE,
-  file = "output/tbl_comp.html"
+  file = "output/tbl_comp_combined.html"
 )
+
+rm(tbl_comp, tbla_comp, tblb_comp, tblc_comp, tbld_comp, tble_comp, tblf_comp)

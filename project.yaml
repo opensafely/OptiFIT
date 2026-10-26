@@ -7,12 +7,6 @@ actions:
       highly_sensitive:
         dataset: output/dataset.csv.gz
 
-  generate_dataset_value_null:
-    run: ehrql:v1 generate-dataset analysis/dataset_definition_value_null.py --output output/dataset_value_null.csv.gz
-    outputs:
-      highly_sensitive:
-        dataset: output/dataset_value_null.csv.gz
-
   first_analysis:
     run: r:v2 analysis/first_analysis.R
     needs: [generate_dataset]
@@ -21,25 +15,25 @@ actions:
         fitn: output/fitn.png
         fitp: output/fitp.png
         tbl_all: output/tbl1c.html
-        tbl_no_zero: output/tbl1c_no_zero.html
+        tbl_no_zero: output/tblc_no_zero.html
+        tbl_zero: output/tbl_zero.html
 
   comparator_analysis:
     run: r:v2 analysis/comparator_analysis.R
     needs: [generate_dataset]
     outputs:
       moderately_sensitive:
-        tbl_comp: output/tbl_comp.html
+        tbl_comp: output/tbl_comp_combined.html
 
-  value_zero_analysis:
-    run: r:v2 analysis/value_zero_analysis.R
-    needs: [generate_dataset]
+  generate_dataset_value_null:
+    run: ehrql:v1 generate-dataset analysis/dataset_definition_value_null.py --output output/dataset_value_null.csv.gz
     outputs:
-      moderately_sensitive:
-        tbl_comp: output/tbl_value_zero.html
-    
-  value_null_analysis:
-    run: r:v2 analysis/value_null_analysis.R
+      highly_sensitive:
+        dataset: output/dataset_value_null.csv.gz
+
+  analysis_value_null:
+    run: r:v2 analysis/analysis_value_null.R
     needs: [generate_dataset_value_null]
     outputs:
       moderately_sensitive:
-        tbl_comp: output/tbl_value_null.html
+        tbl_comp: output/tbl_null.html
