@@ -50,6 +50,7 @@ fit_codes = codelist_from_csv(
     column="code",
 )
 
+
 # Define the study population
 # Note: patients must have a practice registration that spans the enter_date and 2026-01-01,
 # and be aged 18 or older at the time of their first FIT test
@@ -76,6 +77,7 @@ index_fit = (
 
 index_fit_date = index_fit.date
 index_fit_value = index_fit.numeric_value
+index_fit_code = index_fit.snomedct_code
 fit_comparator = index_fit.comparator
 
 # Define eligibility criteria
@@ -124,6 +126,7 @@ dataset.index_fit_date = index_fit_date
 dataset.index_fit_year = index_fit_date.year
 dataset.index_fit_value = index_fit_value
 dataset.fit_comparator = fit_comparator
+dataset.index_fit_code = index_fit_code
 dataset.date_of_death = patients.date_of_death
 dataset.ons_deaths = ons_deaths.date
 dataset.imd_quintile = index_address.imd_quintile
