@@ -14,9 +14,9 @@ actions:
       moderately_sensitive:
         fitn: output/fitn.png
         fitp: output/fitp.png
-        tbl_all: output/tbl1c.html
-        tbl_no_zero: output/tblc_no_zero.html
-        tbl_zero: output/tbl_zero.html
+        fit2_all: output/tbl1_no_indeterminate_gender.html
+        fit2_zero_all: output/tbl1_no_indeterminate_gender_value_zero.html
+        fit2_nozero_all: output/tbl1_no_indeterminate_gender_value_nozero.html
 
   comparator_analysis:
     run: r:v2 analysis/comparator_analysis.R

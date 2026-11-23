@@ -224,7 +224,9 @@ fit[, eth_grp := fcase(
   default = NA_character_
 )]
 
+fit[gender == "I", .N]
 
+fit2 <- fit[gender != "I"]
 
 #look at numbers
 ## code
@@ -245,13 +247,13 @@ fit[, eth_grp := fcase(
 #}, keyby = index_fit_code]
 
 ##year
-fit[, {
+fit2_year <- fit2[, {
   n_false <- sum(fit10 == FALSE, na.rm = TRUE)
   n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
   
   .(
     overall = .N,
-    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    overall_colpct = round(.N / nrow(fit2) * 100, 1),
     
     fitn = n_false,
     fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
@@ -262,13 +264,13 @@ fit[, {
 }, keyby = index_fit_year]
 
 ##gender
-fit[, {
+fit2_gender <- fit2[, {
   n_false <- sum(fit10 == FALSE, na.rm = TRUE)
   n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
   
   .(
     overall = .N,
-    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    overall_colpct = round(.N / nrow(fit2) * 100, 1),
     
     fitn = n_false,
     fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
@@ -279,13 +281,13 @@ fit[, {
 }, keyby = gender]
 
 ##age_cat
-fit[, {
+fit2_age <- fit2[, {
   n_false <- sum(fit10 == FALSE, na.rm = TRUE)
   n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
   
   .(
     overall = .N,
-    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    overall_colpct = round(.N / nrow(fit2) * 100, 1),
     
     fitn = n_false,
     fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
@@ -296,13 +298,13 @@ fit[, {
 }, keyby = age_cat]
 
 ##region
-fit[, {
+fit2_region <- fit2[, {
   n_false <- sum(fit10 == FALSE, na.rm = TRUE)
   n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
   
   .(
     overall = .N,
-    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    overall_colpct = round(.N / nrow(fit2) * 100, 1),
     
     fitn = n_false,
     fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
@@ -312,13 +314,13 @@ fit[, {
   )
 }, keyby = region]
 
-fit[, {
+fit2_eth <- fit2[, {
   n_false <- sum(fit10 == FALSE, na.rm = TRUE)
   n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
   
   .(
     overall = .N,
-    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    overall_colpct = round(.N / nrow(fit2) * 100, 1),
     
     fitn = n_false,
     fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
@@ -328,13 +330,13 @@ fit[, {
   )
 }, keyby = eth_grp]
 
-fit[, {
+fit2_imd <- fit2[, {
   n_false <- sum(fit10 == FALSE, na.rm = TRUE)
   n_true  <- sum(fit10 == TRUE, na.rm = TRUE)
   
   .(
     overall = .N,
-    overall_colpct = round(.N / nrow(fit) * 100, 1),
+    overall_colpct = round(.N / nrow(fit2) * 100, 1),
     
     fitn = n_false,
     fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
@@ -344,323 +346,86 @@ fit[, {
   )
 }, keyby = imd_quintile]
 
-#For now, remove gender not M or F
-fit_gender <- fit[gender == "M" | gender == "F"]
 
+make_tab <- function(dt, var) {
+  dt[, {
+    n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+    n_true  <- sum(fit10 == TRUE,  na.rm = TRUE)
+    .(
+      overall        = .N,
+      overall_colpct = round(.N / nrow(dt) * 100, 1),
+      fitn           = n_false,
+      fitn_rowpct    = round(n_false / (n_false + n_true) * 100, 1),
+      fitp           = n_true,
+      fitp_rowpct    = round(n_true / (n_false + n_true) * 100, 1)
+    )
+  }, keyby = var][
+    , `:=`(variable = var, level = as.character(get(var)))
+  ][
+    , c("variable", "level", "overall", "overall_colpct",
+        "fitn", "fitn_rowpct", "fitp", "fitp_rowpct"), with = FALSE
+  ]
+}
 
-#Create a table 1 without indeterminate gender
-tbl1 <- transpose(fit_gender[, .(
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
-  "Male (%)" = n.perc(gender == "M", 2),
-  "Female (%)" = n.perc(gender == "F", 2),
-  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
-  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
-  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
-  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
-  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
-  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
-  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
-  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
-  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
-  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
-  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
-  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
-  "2 (%)" = n.perc(imd_quintile == "2", 2),
-  "3 (%)" = n.perc(imd_quintile == "3", 2),
-  "4 (%)" = n.perc(imd_quintile == "4", 2),
-  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+vars <- c("index_fit_year", "gender", "age_cat", "region", "eth_grp", "imd_quintile")
 
-tbl1n <- transpose(fit_gender[fit10 == FALSE, .(
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
-  "Male (%)" = n.perc(gender == "M", 2),
-  "Female (%)" = n.perc(gender == "F", 2),
-  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
-  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
-  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
-  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
-  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
-  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
-  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
-  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
-  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
-  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
-  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
-  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
-  "2 (%)" = n.perc(imd_quintile == "2", 2),
-  "3 (%)" = n.perc(imd_quintile == "3", 2),
-  "4 (%)" = n.perc(imd_quintile == "4", 2),
-  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+fit2_all <- rbindlist(lapply(vars, make_tab, dt = fit2))
+total <- fit2[, {
+  n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+  n_true  <- sum(fit10 == TRUE,  na.rm = TRUE)
+  .(variable = "Total", level = "", overall = .N, overall_colpct = 100,
+    fitn = n_false, fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
+    fitp = n_true,  fitp_rowpct = round(n_true  / (n_false + n_true) * 100, 1))
+}]
 
-tbl1p <- transpose(fit_gender[fit10 == TRUE, .(
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
-  "Male (%)" = n.perc(gender == "M", 2),
-  "Female (%)" = n.perc(gender == "F", 2),
-  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
-  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
-  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
-  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
-  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
-  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
-  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
-  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
-  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
-  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
-  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
-  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
-  "2 (%)" = n.perc(imd_quintile == "2", 2),
-  "3 (%)" = n.perc(imd_quintile == "3", 2),
-  "4 (%)" = n.perc(imd_quintile == "4", 2),
-  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
-
-setnames(tbl1, "V1", "All patients")
-setnames(tbl1n, "V1", "FIT <10")
-setnames(tbl1p, "V1", "FIT >=10")
-
-tbl1c <- merge(tbl1, tbl1n, by = "Category", all = TRUE, sort = FALSE)
-tbl1c <- merge(tbl1c, tbl1p, by = "Category", all = TRUE, sort = FALSE)
+fit2_all <- rbindlist(list(total, fit2_all))
+fit2_all
 print(
-  xtable(tbl1c),
+  xtable(fit2_all),
   type = "html",
   include.rownames = FALSE,
-  file = "output/tbl1c.html"
+  file = "output/tbl1_no_indeterminate_gender.html"
 )
 
-rm(tbl1, tbl1n, tbl1p)
+#look at zeroes
+fit2_zero <- fit2[index_fit_value == 0]
+fit2_zero_all <- rbindlist(lapply(vars, make_tab, dt = fit2_zero))
+total_zero <- fit2_zero[, {
+  n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+  n_true  <- sum(fit10 == TRUE,  na.rm = TRUE)
+  .(variable = "Total", level = "", overall = .N, overall_colpct = 100,
+    fitn = n_false, fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
+    fitp = n_true,  fitp_rowpct = round(n_true  / (n_false + n_true) * 100, 1))
+}]
 
-############################### NO ZERO ################################################
-fit_no_zero <- fit_gender[index_fit_value > 0]
-
-tbl_no_zero <- transpose(fit_no_zero[, .(
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
-  "Male (%)" = n.perc(gender == "M", 2),
-  "Female (%)" = n.perc(gender == "F", 2),
-  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
-  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
-  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
-  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
-  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
-  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
-  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
-  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
-  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
-  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
-  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
-  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
-  "2 (%)" = n.perc(imd_quintile == "2", 2),
-  "3 (%)" = n.perc(imd_quintile == "3", 2),
-  "4 (%)" = n.perc(imd_quintile == "4", 2),
-  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
-
-tbln_no_zero <- transpose(fit_no_zero[fit10 == FALSE, .(
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
-  "Male (%)" = n.perc(gender == "M", 2),
-  "Female (%)" = n.perc(gender == "F", 2),
-  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
-  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
-  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
-  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
-  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
-  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
-  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
-  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
-  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
-  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
-  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
-  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
-  "2 (%)" = n.perc(imd_quintile == "2", 2),
-  "3 (%)" = n.perc(imd_quintile == "3", 2),
-  "4 (%)" = n.perc(imd_quintile == "4", 2),
-  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
-
-tblp_no_zero <- transpose(fit_no_zero[fit10 == TRUE, .(
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
-  "Male (%)" = n.perc(gender == "M", 2),
-  "Female (%)" = n.perc(gender == "F", 2),
-  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
-  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
-  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
-  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
-  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
-  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
-  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
-  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
-  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
-  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
-  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
-  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
-  "2 (%)" = n.perc(imd_quintile == "2", 2),
-  "3 (%)" = n.perc(imd_quintile == "3", 2),
-  "4 (%)" = n.perc(imd_quintile == "4", 2),
-  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
-
-setnames(tbl_no_zero, "V1", "All patients")
-setnames(tbln_no_zero, "V1", "FIT <10")
-setnames(tblp_no_zero, "V1", "FIT >=10")
-
-tblc_no_zero <- merge(tbl_no_zero, tbln_no_zero, by = "Category", all = TRUE, sort = FALSE)
-tblc_no_zero <- merge(tblc_no_zero, tblp_no_zero, by = "Category", all = TRUE, sort = FALSE)
+fit2_zero_all <- rbindlist(list(total_zero, fit2_zero_all))
+fit2_zero_all
 print(
-  xtable(tblc_no_zero),
+  xtable(fit2_zero_all),
   type = "html",
   include.rownames = FALSE,
-  file = "output/tblc_no_zero.html"
+  file = "output/tbl1_no_indeterminate_gender_value_zero.html"
 )
 
-rm(tbl_no_zero, tbln_no_zero, tblp_no_zero)
 
+#no zeroes
+fit2_nozero <- fit2[index_fit_value != 0]
+fit2_nozero_all <- rbindlist(lapply(vars, make_tab, dt = fit2_nozero))
+total_nozero <- fit2_nozero[, {
+  n_false <- sum(fit10 == FALSE, na.rm = TRUE)
+  n_true  <- sum(fit10 == TRUE,  na.rm = TRUE)
+  .(variable = "Total", level = "", overall = .N, overall_colpct = 100,
+    fitn = n_false, fitn_rowpct = round(n_false / (n_false + n_true) * 100, 1),
+    fitp = n_true,  fitp_rowpct = round(n_true  / (n_false + n_true) * 100, 1))
+}]
 
-############################### ZEROES######################################
-fit_zero <- fit_gender[index_fit_value == 0]
-tbl_zero <- transpose(fit_zero[, .(
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "Mean Age (95% CI)" = mean.ci(age_at_index_fit, 0),
-  "Male (%)" = n.perc(gender == "M", 2),
-  "Female (%)" = n.perc(gender == "F", 2),
-  "Age <40 (%)" = n.perc(age_cat == "<40", 2),
-  "Age 40-49 (%)" = n.perc(age_cat == "40-49", 2),
-  "Age 50-59 (%)" = n.perc(age_cat == "50-59", 2),
-  "Age 60-69 (%)" = n.perc(age_cat == "60-69", 2),
-  "Age >=70 (%)" = n.perc(age_cat == ">=70", 2),
-  "Ethnicity, White (%)" = n.perc(eth_grp == "White", 2),
-  "Ethnicity, Asian (%)" = n.perc(eth_grp == "Asian", 2),
-  "Ethnicity, Black (%)" = n.perc(eth_grp == "Black", 2),
-  "Ethnicity, Mixed (%)" = n.perc(eth_grp == "Mixed", 2),
-  "Ethnicity, Others (%)" = n.perc(eth_grp == "Others", 2),
-  "Ethnicity, Unknown (%)" = n.perc(is.na(eth_grp), 2),
-  "Most deprived (%)" = n.perc(imd_quintile == "1 - most deprived", 2),
-  "2 (%)" = n.perc(imd_quintile == "2", 2),
-  "3 (%)" = n.perc(imd_quintile == "3", 2),
-  "4 (%)" = n.perc(imd_quintile == "4", 2),
-  "Least deprived (%)" = n.perc(imd_quintile == "5 - least deprived", 2),
-  "Unknown (%)" = n.perc(imd_quintile == "unknown", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
-
+fit2_nozero_all <- rbindlist(list(total_nozero, fit2_nozero_all))
+fit2_nozero_all
 print(
-  xtable(tbl_zero),
+  xtable(fit2_nozero_all),
   type = "html",
   include.rownames = FALSE,
-  file = "output/tbl_zero.html"
+  file = "output/tbl1_no_indeterminate_gender_value_nozero.html"
 )
+
+fit2[index_fit_value < 0, .N]
