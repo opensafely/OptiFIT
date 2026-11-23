@@ -32,24 +32,7 @@ n.perc <- function(x, dig = 0) {
 
 fit <- data.table::fread(here::here("output", "dataset.csv.gz"))
 setkey(fit, patient_id)
-fit_comp <- fit[fit_comparator != ""]
-fit_comp <- fit_comp[sex == "male" | sex == "female"]
-rm(fit)
-
-fit_comp[, .(
-  n = .N,
-  n_missing = sum(is.na(index_fit_value)),
-  mean = mean(index_fit_value, na.rm = TRUE),
-  sd = sd(index_fit_value, na.rm = TRUE),
-  median = median(index_fit_value, na.rm = TRUE),
-  q1 = quantile(index_fit_value, 0.25, na.rm = TRUE),
-  q3 = quantile(index_fit_value, 0.75, na.rm = TRUE),
-  iqr = IQR(index_fit_value, na.rm = TRUE),
-  min = min(index_fit_value, na.rm = TRUE),
-  max = max(index_fit_value, na.rm = TRUE)
-)]
-
-fit_comp[, fit_cat := fcase(
+fit[, fit_cat := fcase(
   index_fit_value == 0, "0.00",
   index_fit_value > 0 & index_fit_value < 1, "0.01-0.99",
   index_fit_value == 1, "1.00",
@@ -80,7 +63,7 @@ fit_comp[, fit_cat := fcase(
   index_fit_value >= 400, ">=400"
 )]
 
-fit_comp[, fit_cat := factor(
+fit[, fit_cat := factor(
   fit_cat,
   levels = c(
     "0.00",
@@ -114,368 +97,66 @@ fit_comp[, fit_cat := factor(
   ),
   ordered = TRUE
 )]
+fit2 <- fit[sex == "male" | sex == "female"]
+fit2_comp <- fit2[fit_comparator != ""]
 
-fit_comp[, .(
-  overall = .N,
-  overall_colpct = round(.N / nrow(fit_comp) * 100, 1)
-), keyby = index_fit_year]
+fit2_comp[, comp_grp := factor(
+  fcase(
+    fit_comparator %in% c("<", "<="), "less",
+    fit_comparator %in% c(">", ">="), "more",
+    fit_comparator %in% c("=", "~"),  "equal"
+  ),
+  levels = c("less", "more", "equal")
+)]
+fit2_comp[, .N, keyby=comp_grp]
 
-fit_comp[, .(
-  overall = .N,
-  overall_colpct = round(.N / nrow(fit_comp) * 100, 1)
-), keyby = region]
 
+#table for comp
+tot <- fit2[, .(fit2_n = .N), keyby = fit_cat]
+cmp <- fit2_comp[, .(comp_n = .N), keyby = fit_cat]
+grp <- fit2_comp[, .N, by = .(fit_cat, comp_grp)]
+grp <- dcast(grp, fit_cat ~ comp_grp, value.var = "N", fill = 0)
 
-#Create a table 1 without indeterminate gender
-tbl_comp <- transpose(fit_comp[, .(
-  "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
-  "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
-  "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
-  "1.01-1.99 (%)" = n.perc(fit_cat == "1.01-1.99", 2),
-  "2.00 (%)" = n.perc(fit_cat == "2.00", 2),
-  "2.01-2.99 (%)" = n.perc(fit_cat == "2.01-2.99", 2),
-  "3.00 (%)" = n.perc(fit_cat == "3.00", 2),
-  "3.01-3.99 (%)" = n.perc(fit_cat == "3.01-3.99", 2),
-  "4.00 (%)" = n.perc(fit_cat == "4.00", 2),
-  "4.01-4.99 (%)" = n.perc(fit_cat == "4.01-4.99", 2),
-  "5.00 (%)" = n.perc(fit_cat == "5.00", 2),
-  "5.01-5.99 (%)" = n.perc(fit_cat == "5.01-5.99", 2),
-  "6.00 (%)" = n.perc(fit_cat == "6.00", 2),
-  "6.01-6.99 (%)" = n.perc(fit_cat == "6.01-6.99", 2),
-  "7.00 (%)" = n.perc(fit_cat == "7.00", 2),
-  "7.01-7.99 (%)" = n.perc(fit_cat == "7.01-7.99", 2),
-  "8.00 (%)" = n.perc(fit_cat == "8.00", 2),
-  "8.01-8.99 (%)" = n.perc(fit_cat == "8.01-8.99", 2),
-  "9.00 (%)" = n.perc(fit_cat == "9.00", 2),
-  "9.01-9.99 (%)" = n.perc(fit_cat == "9.01-9.99", 2),
-  "10.00 (%)" = n.perc(fit_cat == "10.00", 2),
-  "10.01-10.99 (%)" = n.perc(fit_cat == "10.01-10.99", 2),
-  "11.00-19.99 (%)" = n.perc(fit_cat == "11.00-19.99", 2),
-  "20.00-39.99 (%)" = n.perc(fit_cat == "20.00-39.99", 2),
-  "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
-  "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
-  "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+res <- merge(tot, cmp, by = "fit_cat", all.x = TRUE)
+res <- merge(res, grp, by = "fit_cat", all.x = TRUE)
+grp_cols <- levels(fit2_comp$comp_grp)
 
-tbla_comp <- transpose(fit_comp[fit_comparator == "<", .(
-  "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
-  "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
-  "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
-  "1.01-1.99 (%)" = n.perc(fit_cat == "1.01-1.99", 2),
-  "2.00 (%)" = n.perc(fit_cat == "2.00", 2),
-  "2.01-2.99 (%)" = n.perc(fit_cat == "2.01-2.99", 2),
-  "3.00 (%)" = n.perc(fit_cat == "3.00", 2),
-  "3.01-3.99 (%)" = n.perc(fit_cat == "3.01-3.99", 2),
-  "4.00 (%)" = n.perc(fit_cat == "4.00", 2),
-  "4.01-4.99 (%)" = n.perc(fit_cat == "4.01-4.99", 2),
-  "5.00 (%)" = n.perc(fit_cat == "5.00", 2),
-  "5.01-5.99 (%)" = n.perc(fit_cat == "5.01-5.99", 2),
-  "6.00 (%)" = n.perc(fit_cat == "6.00", 2),
-  "6.01-6.99 (%)" = n.perc(fit_cat == "6.01-6.99", 2),
-  "7.00 (%)" = n.perc(fit_cat == "7.00", 2),
-  "7.01-7.99 (%)" = n.perc(fit_cat == "7.01-7.99", 2),
-  "8.00 (%)" = n.perc(fit_cat == "8.00", 2),
-  "8.01-8.99 (%)" = n.perc(fit_cat == "8.01-8.99", 2),
-  "9.00 (%)" = n.perc(fit_cat == "9.00", 2),
-  "9.01-9.99 (%)" = n.perc(fit_cat == "9.01-9.99", 2),
-  "10.00 (%)" = n.perc(fit_cat == "10.00", 2),
-  "10.01-10.99 (%)" = n.perc(fit_cat == "10.01-10.99", 2),
-  "11.00-19.99 (%)" = n.perc(fit_cat == "11.00-19.99", 2),
-  "20.00-39.99 (%)" = n.perc(fit_cat == "20.00-39.99", 2),
-  "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
-  "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
-  "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+# a fit_cat with no comparator rows gives NA; make those 0
+for (j in c("comp_n", grp_cols)) set(res, which(is.na(res[[j]])), j, 0L)
 
-tblb_comp <- transpose(fit_comp[fit_comparator == "<=", .(
-  "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
-  "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
-  "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
-  "1.01-1.99 (%)" = n.perc(fit_cat == "1.01-1.99", 2),
-  "2.00 (%)" = n.perc(fit_cat == "2.00", 2),
-  "2.01-2.99 (%)" = n.perc(fit_cat == "2.01-2.99", 2),
-  "3.00 (%)" = n.perc(fit_cat == "3.00", 2),
-  "3.01-3.99 (%)" = n.perc(fit_cat == "3.01-3.99", 2),
-  "4.00 (%)" = n.perc(fit_cat == "4.00", 2),
-  "4.01-4.99 (%)" = n.perc(fit_cat == "4.01-4.99", 2),
-  "5.00 (%)" = n.perc(fit_cat == "5.00", 2),
-  "5.01-5.99 (%)" = n.perc(fit_cat == "5.01-5.99", 2),
-  "6.00 (%)" = n.perc(fit_cat == "6.00", 2),
-  "6.01-6.99 (%)" = n.perc(fit_cat == "6.01-6.99", 2),
-  "7.00 (%)" = n.perc(fit_cat == "7.00", 2),
-  "7.01-7.99 (%)" = n.perc(fit_cat == "7.01-7.99", 2),
-  "8.00 (%)" = n.perc(fit_cat == "8.00", 2),
-  "8.01-8.99 (%)" = n.perc(fit_cat == "8.01-8.99", 2),
-  "9.00 (%)" = n.perc(fit_cat == "9.00", 2),
-  "9.01-9.99 (%)" = n.perc(fit_cat == "9.01-9.99", 2),
-  "10.00 (%)" = n.perc(fit_cat == "10.00", 2),
-  "10.01-10.99 (%)" = n.perc(fit_cat == "10.01-10.99", 2),
-  "11.00-19.99 (%)" = n.perc(fit_cat == "11.00-19.99", 2),
-  "20.00-39.99 (%)" = n.perc(fit_cat == "20.00-39.99", 2),
-  "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
-  "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
-  "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+# row % of fit2: how many in each fit_cat have a comparator
+res[, comp_pct := round(comp_n / fit2_n * 100, 1)]
 
-tblc_comp <- transpose(fit_comp[fit_comparator == ">", .(
-  "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
-  "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
-  "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
-  "1.01-1.99 (%)" = n.perc(fit_cat == "1.01-1.99", 2),
-  "2.00 (%)" = n.perc(fit_cat == "2.00", 2),
-  "2.01-2.99 (%)" = n.perc(fit_cat == "2.01-2.99", 2),
-  "3.00 (%)" = n.perc(fit_cat == "3.00", 2),
-  "3.01-3.99 (%)" = n.perc(fit_cat == "3.01-3.99", 2),
-  "4.00 (%)" = n.perc(fit_cat == "4.00", 2),
-  "4.01-4.99 (%)" = n.perc(fit_cat == "4.01-4.99", 2),
-  "5.00 (%)" = n.perc(fit_cat == "5.00", 2),
-  "5.01-5.99 (%)" = n.perc(fit_cat == "5.01-5.99", 2),
-  "6.00 (%)" = n.perc(fit_cat == "6.00", 2),
-  "6.01-6.99 (%)" = n.perc(fit_cat == "6.01-6.99", 2),
-  "7.00 (%)" = n.perc(fit_cat == "7.00", 2),
-  "7.01-7.99 (%)" = n.perc(fit_cat == "7.01-7.99", 2),
-  "8.00 (%)" = n.perc(fit_cat == "8.00", 2),
-  "8.01-8.99 (%)" = n.perc(fit_cat == "8.01-8.99", 2),
-  "9.00 (%)" = n.perc(fit_cat == "9.00", 2),
-  "9.01-9.99 (%)" = n.perc(fit_cat == "9.01-9.99", 2),
-  "10.00 (%)" = n.perc(fit_cat == "10.00", 2),
-  "10.01-10.99 (%)" = n.perc(fit_cat == "10.01-10.99", 2),
-  "11.00-19.99 (%)" = n.perc(fit_cat == "11.00-19.99", 2),
-  "20.00-39.99 (%)" = n.perc(fit_cat == "20.00-39.99", 2),
-  "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
-  "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
-  "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+# row % of fit2_comp: split of each fit_cat across comparator groups
+res[, (paste0(grp_cols, "_pct")) := lapply(.SD, function(x) round(x / comp_n * 100, 1)),
+    .SDcols = grp_cols]
 
-tbld_comp <- transpose(fit_comp[fit_comparator == ">=", .(
-  "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
-  "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
-  "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
-  "1.01-1.99 (%)" = n.perc(fit_cat == "1.01-1.99", 2),
-  "2.00 (%)" = n.perc(fit_cat == "2.00", 2),
-  "2.01-2.99 (%)" = n.perc(fit_cat == "2.01-2.99", 2),
-  "3.00 (%)" = n.perc(fit_cat == "3.00", 2),
-  "3.01-3.99 (%)" = n.perc(fit_cat == "3.01-3.99", 2),
-  "4.00 (%)" = n.perc(fit_cat == "4.00", 2),
-  "4.01-4.99 (%)" = n.perc(fit_cat == "4.01-4.99", 2),
-  "5.00 (%)" = n.perc(fit_cat == "5.00", 2),
-  "5.01-5.99 (%)" = n.perc(fit_cat == "5.01-5.99", 2),
-  "6.00 (%)" = n.perc(fit_cat == "6.00", 2),
-  "6.01-6.99 (%)" = n.perc(fit_cat == "6.01-6.99", 2),
-  "7.00 (%)" = n.perc(fit_cat == "7.00", 2),
-  "7.01-7.99 (%)" = n.perc(fit_cat == "7.01-7.99", 2),
-  "8.00 (%)" = n.perc(fit_cat == "8.00", 2),
-  "8.01-8.99 (%)" = n.perc(fit_cat == "8.01-8.99", 2),
-  "9.00 (%)" = n.perc(fit_cat == "9.00", 2),
-  "9.01-9.99 (%)" = n.perc(fit_cat == "9.01-9.99", 2),
-  "10.00 (%)" = n.perc(fit_cat == "10.00", 2),
-  "10.01-10.99 (%)" = n.perc(fit_cat == "10.01-10.99", 2),
-  "11.00-19.99 (%)" = n.perc(fit_cat == "11.00-19.99", 2),
-  "20.00-39.99 (%)" = n.perc(fit_cat == "20.00-39.99", 2),
-  "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
-  "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
-  "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+setcolorder(res, c("fit_cat", "fit2_n", "comp_n", "comp_pct",
+                   as.vector(rbind(grp_cols, paste0(grp_cols, "_pct")))))
 
-tble_comp <- transpose(fit_comp[fit_comparator == "=", .(
-  "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
-  "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
-  "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
-  "1.01-1.99 (%)" = n.perc(fit_cat == "1.01-1.99", 2),
-  "2.00 (%)" = n.perc(fit_cat == "2.00", 2),
-  "2.01-2.99 (%)" = n.perc(fit_cat == "2.01-2.99", 2),
-  "3.00 (%)" = n.perc(fit_cat == "3.00", 2),
-  "3.01-3.99 (%)" = n.perc(fit_cat == "3.01-3.99", 2),
-  "4.00 (%)" = n.perc(fit_cat == "4.00", 2),
-  "4.01-4.99 (%)" = n.perc(fit_cat == "4.01-4.99", 2),
-  "5.00 (%)" = n.perc(fit_cat == "5.00", 2),
-  "5.01-5.99 (%)" = n.perc(fit_cat == "5.01-5.99", 2),
-  "6.00 (%)" = n.perc(fit_cat == "6.00", 2),
-  "6.01-6.99 (%)" = n.perc(fit_cat == "6.01-6.99", 2),
-  "7.00 (%)" = n.perc(fit_cat == "7.00", 2),
-  "7.01-7.99 (%)" = n.perc(fit_cat == "7.01-7.99", 2),
-  "8.00 (%)" = n.perc(fit_cat == "8.00", 2),
-  "8.01-8.99 (%)" = n.perc(fit_cat == "8.01-8.99", 2),
-  "9.00 (%)" = n.perc(fit_cat == "9.00", 2),
-  "9.01-9.99 (%)" = n.perc(fit_cat == "9.01-9.99", 2),
-  "10.00 (%)" = n.perc(fit_cat == "10.00", 2),
-  "10.01-10.99 (%)" = n.perc(fit_cat == "10.01-10.99", 2),
-  "11.00-19.99 (%)" = n.perc(fit_cat == "11.00-19.99", 2),
-  "20.00-39.99 (%)" = n.perc(fit_cat == "20.00-39.99", 2),
-  "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
-  "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
-  "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+tbl_comp <- copy(res)
+cnt_cols <- c("comp_n", grp_cols)
 
-tblf_comp <- transpose(fit_comp[fit_comparator == "~", .(
-  "0.00 (%)" = n.perc(fit_cat == "0.00", 2),
-  "0.01-0.99 (%)" = n.perc(fit_cat == "0.01-0.99", 2),
-  "1.00 (%)" = n.perc(fit_cat == "1.00", 2),
-  "1.01-1.99 (%)" = n.perc(fit_cat == "1.01-1.99", 2),
-  "2.00 (%)" = n.perc(fit_cat == "2.00", 2),
-  "2.01-2.99 (%)" = n.perc(fit_cat == "2.01-2.99", 2),
-  "3.00 (%)" = n.perc(fit_cat == "3.00", 2),
-  "3.01-3.99 (%)" = n.perc(fit_cat == "3.01-3.99", 2),
-  "4.00 (%)" = n.perc(fit_cat == "4.00", 2),
-  "4.01-4.99 (%)" = n.perc(fit_cat == "4.01-4.99", 2),
-  "5.00 (%)" = n.perc(fit_cat == "5.00", 2),
-  "5.01-5.99 (%)" = n.perc(fit_cat == "5.01-5.99", 2),
-  "6.00 (%)" = n.perc(fit_cat == "6.00", 2),
-  "6.01-6.99 (%)" = n.perc(fit_cat == "6.01-6.99", 2),
-  "7.00 (%)" = n.perc(fit_cat == "7.00", 2),
-  "7.01-7.99 (%)" = n.perc(fit_cat == "7.01-7.99", 2),
-  "8.00 (%)" = n.perc(fit_cat == "8.00", 2),
-  "8.01-8.99 (%)" = n.perc(fit_cat == "8.01-8.99", 2),
-  "9.00 (%)" = n.perc(fit_cat == "9.00", 2),
-  "9.01-9.99 (%)" = n.perc(fit_cat == "9.01-9.99", 2),
-  "10.00 (%)" = n.perc(fit_cat == "10.00", 2),
-  "10.01-10.99 (%)" = n.perc(fit_cat == "10.01-10.99", 2),
-  "11.00-19.99 (%)" = n.perc(fit_cat == "11.00-19.99", 2),
-  "20.00-39.99 (%)" = n.perc(fit_cat == "20.00-39.99", 2),
-  "40.00-99.99 (%)" = n.perc(fit_cat == "40.00-99.99", 2),
-  "100.00-199.99 (%)" = n.perc(fit_cat == "100.00-199.99", 2),
-  "200.00-399.99 (%)" = n.perc(fit_cat == "200.00-399.99", 2),
-  ">=400 (%)" = n.perc(fit_cat == ">=400", 2),
-  "2019 (%)" = n.perc(index_fit_year == "2019", 2),
-  "2020 (%)" = n.perc(index_fit_year == "2020", 2),
-  "2021 (%)" = n.perc(index_fit_year == "2021", 2),
-  "2022 (%)" = n.perc(index_fit_year == "2022", 2),
-  "2023 (%)" = n.perc(index_fit_year == "2023", 2),
-  "2024 (%)" = n.perc(index_fit_year == "2024", 2),
-  "No region (%)" = n.perc(region == "", 2),
-  "East (%)" = n.perc(region == "East", 2),
-  "East Midlands (%)" = n.perc(region == "East Midlands", 2),
-  "London (%)" = n.perc(region == "London", 2),
-  "North East (%)" = n.perc(region == "North East", 2),
-  "North West (%)" = n.perc(region == "North West", 2),
-  "South East (%)" = n.perc(region == "South East", 2),
-  "South West (%)" = n.perc(region == "South West", 2),
-  "West Midlands (%)" = n.perc(region == "West Midlands", 2),
-  "Yorkshire and The Humber (%)" = n.perc(region == "Yorkshire and The Humber", 2)
-)], keep.names = "Category")
+for (j in cnt_cols) {
+  set(tbl_comp, j = j,
+      value = ifelse(tbl_comp[[j]] < 10, "<10",
+                     format(tbl_comp[[j]], big.mark = ",", trim = TRUE)))
+}
 
-setnames(tbl_comp, "V1", "All patients")
-setnames(tbla_comp, "V1", "<")
-setnames(tblb_comp, "V1", "<=")
-setnames(tblc_comp, "V1", ">")
-setnames(tbld_comp, "V1", ">=")
-setnames(tble_comp, "V1", "=")
-setnames(tblf_comp, "V1", "~")
+print(xtable(tbl_comp), type = "html", include.rownames = FALSE,
+      file = "output/tbl_fitcat_comparator.html")
 
-tbl_comp_combined <- merge(tbl_comp, tbla_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp_combined <- merge(tbl_comp_combined, tblb_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp_combined <- merge(tbl_comp_combined, tblc_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp_combined <- merge(tbl_comp_combined, tbld_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp_combined <- merge(tbl_comp_combined, tble_comp, by = "Category", all = TRUE, sort = FALSE)
-tbl_comp_combined <- merge(tbl_comp_combined, tblf_comp, by = "Category", all = TRUE, sort = FALSE)
-
-print(
-  xtable(tbl_comp_combined),
-  type = "html",
-  include.rownames = FALSE,
-  file = "output/tbl_comp_combined.html"
-)
-
-rm(tbl_comp, tbla_comp, tblb_comp, tblc_comp, tbld_comp, tble_comp, tblf_comp)
+fit[, .N, keyby=sex]
+fit2[, .N, keyby=fit_comparator]
+fit2_comp[, .(
+  n = .N,
+  n_missing = sum(is.na(index_fit_value)),
+  mean = mean(index_fit_value, na.rm = TRUE),
+  sd = sd(index_fit_value, na.rm = TRUE),
+  median = median(index_fit_value, na.rm = TRUE),
+  q1 = quantile(index_fit_value, 0.25, na.rm = TRUE),
+  q3 = quantile(index_fit_value, 0.75, na.rm = TRUE),
+  iqr = IQR(index_fit_value, na.rm = TRUE),
+  min = min(index_fit_value, na.rm = TRUE),
+  max = max(index_fit_value, na.rm = TRUE)
+)]
