@@ -58,9 +58,14 @@ fit[, fit_cat := fcase(
   index_fit_value >= 11 & index_fit_value < 20, "11.00-19.99",
   index_fit_value >= 20 & index_fit_value < 40, "20.00-39.99",
   index_fit_value >= 40 & index_fit_value < 100, "40.00-99.99",
-  index_fit_value >= 100 & index_fit_value < 200, "100.00-199.99",
-  index_fit_value >= 200 & index_fit_value < 400, "200.00-399.99",
-  index_fit_value >= 400, ">=400"
+  index_fit_value == 100, "100.00",
+  index_fit_value > 100 & index_fit_value < 200, "100.01-199.99",
+  index_fit_value == 200, "200.00",
+  index_fit_value > 200 & index_fit_value < 300, "200.01-299.99",
+  index_fit_value == 300, "300.00", 
+  index_fit_value > 300 & index_fit_value < 400, "300.01-399.99",
+  index_fit_value == 400, "400.00",
+  index_fit_value > 400, ">400.00"
 )]
 
 fit[, fit_cat := factor(
@@ -91,9 +96,14 @@ fit[, fit_cat := factor(
     "11.00-19.99",
     "20.00-39.99",
     "40.00-99.99",
-    "100.00-199.99",
-    "200.00-399.99",
-    ">=400"
+    "100.00",
+    "100.01-199.99",
+    "200.00",
+    "200.01-299.99",
+    "300.00",
+    "300.01-399.99",
+    "400.00",
+    ">400.00"
   ),
   ordered = TRUE
 )]
@@ -139,7 +149,7 @@ cnt_cols <- c("comp_n", grp_cols)
 
 for (j in cnt_cols) {
   set(tbl_comp, j = j,
-      value = ifelse(tbl_comp[[j]] < 10, "<10", as.character(tbl_comp[[j]])))
+      value = ifelse(tbl_comp[[j]] > 0 & tbl_comp[[j]] < 10, "<10", as.character(tbl_comp[[j]])))
 }
 
 print(xtable(tbl_comp), type = "html", include.rownames = FALSE,
@@ -185,7 +195,7 @@ cnt_cols <- c("comp_n", grp_cols)
 
 for (j in cnt_cols) {
   set(tbl_comp2, j = j,
-      value = ifelse(tbl_comp2[[j]] < 10, "<10", as.character(tbl_comp2[[j]])))
+      value = ifelse(tbl_comp2[[j]] > 0 & tbl_comp2[[j]] < 10, "<10", as.character(tbl_comp2[[j]])))
 }
 
 print(xtable(tbl_comp2), type = "html", include.rownames = FALSE,
