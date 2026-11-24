@@ -24,6 +24,7 @@ actions:
     outputs:
       moderately_sensitive:
         tbl_comp: output/tbl_fitcat_comparator.html
+        tbl_comp2: output/tbl_fitcat_comparator_no_equal.html
 
   generate_dataset_value_null:
     run: ehrql:v1 generate-dataset analysis/dataset_definition_value_null.py --output output/dataset_value_null.csv.gz

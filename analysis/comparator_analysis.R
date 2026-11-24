@@ -139,12 +139,57 @@ cnt_cols <- c("comp_n", grp_cols)
 
 for (j in cnt_cols) {
   set(tbl_comp, j = j,
-      value = ifelse(tbl_comp[[j]] < 10, "<10",
-                     format(tbl_comp[[j]], big.mark = ",", trim = TRUE)))
+      value = ifelse(tbl_comp[[j]] < 10, "<10", as.character(tbl_comp[[j]])))
 }
 
 print(xtable(tbl_comp), type = "html", include.rownames = FALSE,
       file = "output/tbl_fitcat_comparator.html")
+
+#make = and ~ as no comparator
+fit2_comp2 <- fit2[!(fit2$fit_comparator %in% c("", "=", "~")), ]
+fit2_comp2[, .N, keyby=fit_comparator]
+fit2_comp2[, comp_grp := factor(
+  fcase(
+    fit_comparator %in% c("<", "<="), "less",
+    fit_comparator %in% c(">", ">="), "more"
+  ),
+  levels = c("less", "more")
+)]
+fit2_comp2[, .N, keyby=comp_grp]
+
+#table for comp2
+tot <- fit2[, .(fit2_n = .N), keyby = fit_cat]
+cmp <- fit2_comp2[, .(comp_n = .N), keyby = fit_cat]
+grp <- fit2_comp2[, .N, by = .(fit_cat, comp_grp)]
+grp <- dcast(grp, fit_cat ~ comp_grp, value.var = "N", fill = 0)
+
+res2 <- merge(tot, cmp, by = "fit_cat", all.x = TRUE)
+res2 <- merge(res2, grp, by = "fit_cat", all.x = TRUE)
+grp_cols <- levels(fit2_comp2$comp_grp)
+
+# a fit_cat with no comparator rows gives NA; make those 0
+for (j in c("comp_n", grp_cols)) set(res2, which(is.na(res2[[j]])), j, 0L)
+
+# row % of fit2: how many in each fit_cat have a comparator
+res2[, comp_pct := round(comp_n / fit2_n * 100, 1)]
+
+# row % of fit2_comp: split of each fit_cat across comparator groups
+res2[, (paste0(grp_cols, "_pct")) := lapply(.SD, function(x) round(x / comp_n * 100, 1)),
+    .SDcols = grp_cols]
+
+setcolorder(res2, c("fit_cat", "fit2_n", "comp_n", "comp_pct",
+                   as.vector(rbind(grp_cols, paste0(grp_cols, "_pct")))))
+
+tbl_comp2 <- copy(res2)
+cnt_cols <- c("comp_n", grp_cols)
+
+for (j in cnt_cols) {
+  set(tbl_comp2, j = j,
+      value = ifelse(tbl_comp2[[j]] < 10, "<10", as.character(tbl_comp2[[j]])))
+}
+
+print(xtable(tbl_comp2), type = "html", include.rownames = FALSE,
+      file = "output/tbl_fitcat_comparator_no_equal.html")
 
 fit[, .N, keyby=sex]
 fit2[, .N, keyby=fit_comparator]
@@ -160,3 +205,5 @@ fit2_comp[, .(
   min = min(index_fit_value, na.rm = TRUE),
   max = max(index_fit_value, na.rm = TRUE)
 )]
+
+
